@@ -49,10 +49,10 @@ class UserProfile(models.Model):
         (MEMBER, 'Member'),
     ]
     
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=MEMBER)
+    role = models.CharField(max_length=15, choices=ROLE_CHOICES, default=MEMBER)
 
     def __str__(self):
-        return f"{self.user.username} - {self.role}"
+        return f"{self.user.username} ({self.get_role_display()})"
 
 
 # --- Signals for Creating and Saving UserProfile ---

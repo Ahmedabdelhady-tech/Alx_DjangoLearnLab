@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.generic.detail import DetailView
 from .models import Book, Library, UserProfile
 
@@ -23,24 +23,28 @@ def is_librarian(user):
 def is_member(user):
     return user.userprofile.role == 'Member'
 
+@login_required
 @user_passes_test(is_admin)
 def admin_view(request):
     return render(request, 'relationship_app/admin_view.html')
 
+@login_required
 @user_passes_test(is_librarian)
 def librarian_view(request):
     return render(request, 'relationship_app/librarian_view.html')
 
+@login_required
 @user_passes_test(is_member)
 def member_view(request):
     return render(request, 'relationship_app/member_view.html')
-
 
 def register(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            
+            UserProfile.objects.create(user=user, role=UserProfile.MEMBER)  
             login(request, user)
             return redirect('home') 
     else:
@@ -60,4 +64,4 @@ def user_login(request):
 
 def user_logout(request):
     logout(request)
-    return redirect('login')  
+    return redirect('login') 
