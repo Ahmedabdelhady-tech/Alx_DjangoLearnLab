@@ -35,7 +35,6 @@ from django.contrib.auth.models import User
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    
     ADMIN = 'Admin'
     LIBRARIAN = 'Librarian'
     MEMBER = 'Member'
@@ -44,7 +43,6 @@ class UserProfile(models.Model):
         (LIBRARIAN, 'Librarian'),
         (MEMBER, 'Member'),
     ]
-    
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=MEMBER)
 
     def __str__(self):
@@ -61,4 +59,3 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.userprofile.save()
-
