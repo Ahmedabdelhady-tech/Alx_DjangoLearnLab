@@ -130,3 +130,5 @@ AUTH_USER_MODEL = 'relationship_app.ahmed'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'  
 LOGOUT_REDIRECT_URL = 'login'
+
+AUTH_USER_MODEL = 'relationship_app.CustomUser'
