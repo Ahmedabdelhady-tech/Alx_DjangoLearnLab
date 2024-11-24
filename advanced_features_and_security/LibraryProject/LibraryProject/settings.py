@@ -23,7 +23,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-j7s#($i(siwoos&4mcwssewlyc-bcv=&&ln-g=madg09k1=)vi'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'  # Protects against clickjacking
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Ensures browsers don't try to sniff content types
+CSRF_COOKIE_SECURE = True  # Ensure CSRF cookie is only sent over HTTPS
+SESSION_COOKIE_SECURE = True  # Ensure session cookie is only sent over HTTPS
+
+
+
 
 ALLOWED_HOSTS = []
 
@@ -31,6 +39,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'csp',
     'bookshelf',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -49,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'csp.middleware.CSPMiddleware',
 ]
 
 ROOT_URLCONF = 'LibraryProject.urls'
@@ -131,3 +141,7 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 
 AUTH_USER_MODEL = 'bookshelf.CustomUser'
+
+CSP_DEFAULT_SRC = ("'self'",)  
+CSP_IMG_SRC = ("'self'", 'data:')  
+CSP_STYLE_SRC = ("'self'", 'https://fonts.googleapis.com')  
