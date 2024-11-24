@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'relationship_app'
+    'relationship_app',
 ]
 
 MIDDLEWARE = [
@@ -124,7 +124,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'relationship_app.ahmed'
 
 
 LOGIN_URL = 'login'
