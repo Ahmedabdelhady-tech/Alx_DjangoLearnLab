@@ -13,11 +13,14 @@ class BookListView(generics.ListCreateAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]  # Read-only for unauthenticated users
+
+    # Set up filtering, searching, and ordering
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['title', 'author__name', 'publication_year']
-    search_fields = ['title', 'author__name']
-    ordering_fields = ['title', 'publication_year']
-    ordering = ['title']
+    filterset_fields = ['title', 'author', 'publication_year']  # Fields that can be filtered
+    search_fields = ['title', 'author']  # Enable search on title and author
+    ordering_fields = ['title', 'publication_year']  # Enable ordering by title and publication year
+    ordering = ['title']  # Default ordering by title
+
 
 # DetailView: Retrieve a single book by ID
 class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -25,11 +28,13 @@ class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticated]  # Authenticated users only
 
+
 # CreateView: Add a new book
 class BookCreateView(generics.CreateAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticated]  # Authenticated users only
+
 
 # UpdateView: Modify an existing book
 class BookUpdateView(generics.UpdateAPIView):
@@ -37,11 +42,13 @@ class BookUpdateView(generics.UpdateAPIView):
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticated]  # Authenticated users only
 
+
 # DeleteView: Remove a book
 class BookDeleteView(generics.DestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticated]  # Authenticated users only
+
 
 # Batch Update for Books
 class BookBatchUpdateView(APIView):
@@ -62,6 +69,7 @@ class BookBatchUpdateView(APIView):
                                 status=status.HTTP_404_NOT_FOUND)
         return Response({"message": "Books updated successfully."}, status=status.HTTP_200_OK)
 
+
 # Batch Delete for Books
 class BookBatchDeleteView(APIView):
     permission_classes = [IsAuthenticated]
@@ -72,19 +80,3 @@ class BookBatchDeleteView(APIView):
             return Response({"error": "No IDs provided."}, status=status.HTTP_400_BAD_REQUEST)
         Book.objects.filter(id__in=ids).delete()
         return Response({"message": "Books deleted successfully."}, status=status.HTTP_200_OK)
-
-class BookListView(generics.ListAPIView):
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-
-    # Set up filtering
-    filter_backends = (DjangoFilterBackend, SearchFilter, OrderingFilter)
-    filterset_fields = ['title', 'author', 'publication_year']  # Fields that can be filtered
-
-    # Search configuration
-    search_fields = ['title', 'author']  # Enable search on title and author
-
-    # Ordering configuration
-    ordering_fields = ['title', 'publication_year']  # Enable ordering by title and publication year
-    ordering = ['title']  # Default ordering by title
-
