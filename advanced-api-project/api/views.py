@@ -72,3 +72,19 @@ class BookBatchDeleteView(APIView):
             return Response({"error": "No IDs provided."}, status=status.HTTP_400_BAD_REQUEST)
         Book.objects.filter(id__in=ids).delete()
         return Response({"message": "Books deleted successfully."}, status=status.HTTP_200_OK)
+
+class BookListView(generics.ListAPIView):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+
+    # Set up filtering
+    filter_backends = (DjangoFilterBackend, SearchFilter, OrderingFilter)
+    filterset_fields = ['title', 'author', 'publication_year']  # Fields that can be filtered
+
+    # Search configuration
+    search_fields = ['title', 'author']  # Enable search on title and author
+
+    # Ordering configuration
+    ordering_fields = ['title', 'publication_year']  # Enable ordering by title and publication year
+    ordering = ['title']  # Default ordering by title
+
