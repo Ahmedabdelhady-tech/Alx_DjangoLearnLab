@@ -1,4 +1,3 @@
-from django.shortcuts import render
 
 # Create your views here.
 from rest_framework import generics, permissions
@@ -34,3 +33,43 @@ class BookDeleteView(generics.DestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from .models import Book
+from .serializers import BookSerializer
+
+class BookBatchUpdateView(APIView):
+    """
+    Handles batch updates for books.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request):
+        data = request.data  # Expecting a list of book objects
+        for book_data in data:
+            try:
+                book = Book.objects.get(id=book_data['id'])
+                serializer = BookSerializer(book, data=book_data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except Book.DoesNotExist:
+                return Response({"error": f"Book with ID {book_data['id']} does not exist."},
+                                status=status.HTTP_404_NOT_FOUND)
+        return Response({"message": "Books updated successfully."}, status=status.HTTP_200_OK)
+
+class BookBatchDeleteView(APIView):
+    """
+    Handles batch deletion for books.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request):
+        ids = request.data.get("ids", [])
+        if not ids:
+            return Response({"error": "No IDs provided."}, status=status.HTTP_400_BAD_REQUEST)
+        Book.objects.filter(id__in=ids).delete()
+        return Response({"message": "Books deleted successfully."}, status=status.HTTP_200_OK)
