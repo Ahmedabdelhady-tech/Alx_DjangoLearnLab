@@ -73,3 +73,19 @@ class BookBatchDeleteView(APIView):
             return Response({"error": "No IDs provided."}, status=status.HTTP_400_BAD_REQUEST)
         Book.objects.filter(id__in=ids).delete()
         return Response({"message": "Books deleted successfully."}, status=status.HTTP_200_OK)
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from .models import Book
+from .serializers import BookSerializer
+
+class BookListView(ListCreateAPIView):
+
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]  
+
+class BookDetailView(RetrieveUpdateDestroyAPIView):
+
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticated] 
