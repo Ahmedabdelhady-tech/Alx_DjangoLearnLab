@@ -1,4 +1,5 @@
 from rest_framework.filters import OrderingFilter, SearchFilter
+from .filters import BookFilter  
 from django_filters import rest_framework as filters
 from rest_framework import generics
 from rest_framework.views import APIView
@@ -8,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from django_filters.rest_framework import DjangoFilterBackend  
 from .models import Book
 from .serializers import BookSerializer
+
 
 
 # Filter class for Book model (custom filter)
