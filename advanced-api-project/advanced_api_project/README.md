@@ -23,3 +23,4 @@ pip install django djangorestframework
 #### **Ordering**
 - Order by publication year (ascending): `/api/books/?ordering=publication_year`
 - Order by publication year (descending): `/api/books/?ordering=-publication_year`
+
