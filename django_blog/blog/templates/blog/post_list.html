@@ -1,0 +1,10 @@
+<h1>Blog Posts</h1>
+<ul>
+    {% for post in posts %}
+    <li>
+        <a href="{% url 'post-detail' post.pk %}">{{ post.title }}</a>
+        <p>{{ post.content|slice:":100" }}...</p>  <!-- Display first 100 characters of content -->
+        <p>By {{ post.author }} on {{ post.published_date }}</p>
+    </li>
+    {% endfor %}
+</ul>

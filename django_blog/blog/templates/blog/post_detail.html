@@ -1,0 +1,5 @@
+<h1>{{ post.title }}</h1>
+<p>{{ post.content }}</p>
+<p>By {{ post.author }} on {{ post.published_date }}</p>
+<a href="{% url 'post-update' post.pk %}">Edit</a>
+<a href="{% url 'post-delete' post.pk %}">Delete</a>
