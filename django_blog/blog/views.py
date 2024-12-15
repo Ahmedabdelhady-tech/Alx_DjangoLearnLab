@@ -1,100 +1,178 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse, reverse_lazy
+from typing import Any
+from django.db.models.query import QuerySet
+from django.shortcuts import render, redirect, get_object_or_404
+from blog.forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, CommentForm, PostForm
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from .models import Post, Comment
-from .forms import PostForm, CommentForm
+from django.contrib.auth import logout
+from django.views.generic import (
+    ListView,
+    DetailView,
+    CreateView,
+    UpdateView,
+    DeleteView,
 
-# ListView: Display all blog posts
+)
+from blog.models import Post, Comment
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.urls import reverse
+from django.db.models import Q
+from taggit.models import Tag
+
+
+# Create your views here.
+def register(request):
+    if request.method == 'POST':
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your Account has been created successfully")
+            return redirect('login')
+    else:
+        form = UserRegisterForm()
+
+    return render(request, 'blog/register.html', {'form': form})
+
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, "Your Account has been updated successfully")
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form,
+    }
+
+    return render(request, 'blog/profile.html', context)
+
+def logout_view(request):
+    logout(request)
+    return render(request, 'blog/logout.html')
+
+
+class HomePostListView(ListView):
+    model = Post
+    template_name = 'blog/home.html'
+    ordering = ['-published_date']
+
 class PostListView(ListView):
     model = Post
-    template_name = 'blog/post_list.html'  # Template for the list of posts
-    context_object_name = 'posts'  # The variable to pass to the template
-    ordering = ['-published_date']  # Order by the most recent posts
+    ordering = ['-published_date']
 
-# DetailView: Display a single post by primary key (ID)
 class PostDetailView(DetailView):
     model = Post
-    template_name = 'blog/post_detail.html'  # Template for post detail
-    context_object_name = 'post'
 
-# CreateView: Allows authenticated users to create a new post
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['comments'] = self.object.comments.all()
+        context['form'] = CommentForm()
+        return context
+    
+
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
-    form_class = PostForm  # Custom form for Post
-    template_name = 'blog/post_form.html'
-    success_url = '/'  # Redirect to home page after successful creation
+    form_class = PostForm
 
     def form_valid(self, form):
-        form.instance.author = self.request.user  # Set the current user as the author
+        form.instance.author = self.request.user
         return super().form_valid(form)
-
-# UpdateView: Allows the author of the post to update the post
+    
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
-    form_class = PostForm  # Custom form for Post
-    template_name = 'blog/post_form.html'
-    success_url = '/'
+    form_class = PostForm
 
     def form_valid(self, form):
-        form.instance.author = self.request.user  # Ensure the author is still the current user
+        form.instance.author = self.request.user
         return super().form_valid(form)
-
+    
     def test_func(self):
         post = self.get_object()
-        if self.request.user == post.author:
+        if post.author == self.request.user:
             return True
         return False
-
-# DeleteView: Allows the author to delete the post
+    
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
-    template_name = 'blog/post_confirm_delete.html'
-    success_url = '/'  # Redirect to home page after successful deletion
+    success_url = '/'
+
 
     def test_func(self):
         post = self.get_object()
-        if self.request.user == post.author:
+        if post.author == self.request.user:
             return True
         return False
+    
 
-
-# Create comment on a post
-@login_required
-def add_comment(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    if request.method == 'POST':
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.post = post
-            comment.author = request.user
-            comment.save()
-            return redirect('post-detail', pk=post.id)
-    else:
-        form = CommentForm()
-    return render(request, 'blog/add_comment.html', {'form': form, 'post': post})
-
-# Update comment
-class CommentUpdateView(LoginRequiredMixin, UpdateView):
+class CommentCreateView(LoginRequiredMixin, CreateView):
     model = Comment
     form_class = CommentForm
-    template_name = 'blog/edit_comment.html'
 
-    def get_queryset(self):
-        return Comment.objects.filter(author=self.request.user)
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        form.instance.post = get_object_or_404(Post, pk=self.kwargs['pk'])
+        form.save()
+        return redirect('post-detail', pk=self.kwargs['pk'])
+    
 
-    def get_success_url(self):
-        return reverse_lazy('post-detail', kwargs={'pk': self.object.post.pk})
-
-# Delete comment
-class CommentDeleteView(LoginRequiredMixin, DeleteView):
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Comment
-    template_name = 'blog/confirm_comment_delete.html'
-
-    def get_queryset(self):
-        return Comment.objects.filter(author=self.request.user)
+    form_class = CommentForm
 
     def get_success_url(self):
-        return reverse_lazy('post-detail', kwargs={'pk': self.object.post.pk})
+        return reverse('post-detail', kwargs={'pk': self.object.post.pk})
+    
+    def test_func(self):
+        comment = self.get_object()
+        return comment.author == self.request.user
+    
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+    form_class = CommentForm
+
+    def get_success_url(self):
+        return reverse('post-detail', kwargs={'pk': self.object.post.pk})
+    
+    def test_func(self):
+        comment = self.get_object()
+        return comment.author == self.request.user
+    
+
+def search(request):
+    query = request.GET.get('q')
+    if query:
+        posts = Post.objects.filter(
+            Q(title__icontains=query) |
+            Q(content__icontains=query) |
+            Q(tags__name__icontains=query) 
+        ).distinct()
+    else:
+        posts.objects.none()
+    
+    context = {
+        'posts': posts,
+        'query': query,
+    }
+
+    return render(request, 'blog/search_results.html', context)
+
+class PostByTagListView(ListView):
+    model = Post
+    template_name = 'blog/posts_by_tag.html'
+    context_object_name = 'posts'
+
+    def get_queryset(self):
+        self.tag = get_object_or_404(Tag, slug=self.kwargs.get('tag_slug'))
+        return Post.objects.filter(tags__slug=self.tag.slug)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tags'] = self.tag
+        return context
