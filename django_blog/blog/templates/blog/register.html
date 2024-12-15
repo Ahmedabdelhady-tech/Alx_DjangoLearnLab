@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2>Register</h2>
+        <form method="POST" action="{% url 'register' %}">
+            {% csrf_token %}
+
+            <!-- Form field errors (for individual field errors) -->
+            {% if form.errors %}
+                <div class="error">
+                    <ul>
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Username Field -->
+            <div class="form-group">
+                <label for="username">Username</label>
+                {{ form.username }}
+            </div>
+
+            <!-- Email Field -->
+            <div class="form-group">
+                <label for="email">Email</label>
+                {{ form.email }}
+            </div>
+
+            <!-- Password1 Field -->
+            <div class="form-group">
+                <label for="password1">Password</label>
+                {{ form.password1 }}
+            </div>
+
+            <!-- Password2 Field -->
+            <div class="form-group">
+                <label for="password2">Confirm Password</label>
+                {{ form.password2 }}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit">Register</button>
+
+            <p>Already have an account? <a href="{% url 'login' %}">Login here</a>.</p>
+        </form>
+    </div>
+</body>
+</html>
