@@ -1,34 +1,30 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
-from.models import CustomUser
+from django.contrib.auth import get_user_model
 
+# Get the custom user model
+User = get_user_model()
 
-User = get_user_model()  
-class RegisterSerializer(serializers.ModelSerializer):
-    username = serializers.CharField()    
-    password = serializers.CharField(write_only=True, required=True)
-    confirm_password = serializers.CharField(write_only=True, required=True)
+class UserSerializer(serializers.ModelSerializer):
+    # Define password field explicitly and set write_only to true
+    password = serializers.CharField(write_only=True)
 
     class Meta:
-        model = CustomUser
-        fields = ['username', 'email', 'password', 'confirm_password','bio', 'profile_picture']
-        
-
+        model = User
+        fields = ['username', 'email', 'bio', 'profile_picture', 'password']
+        extra_kwargs = {
+            'password': {'write_only': True}  # Don't return password in responses
+        }
 
     def create(self, validated_data):
-        user = get_user_model().objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-            bio = validated_data.get('bio', ''),
-            profile_picture = validated_data.get('profile_picture', None)
-        )
-        
-        Token.objects.create(user=user) 
+        # Remove the password from the validated data before passing it to create_user
+        password = validated_data.pop('password')
+        user = get_user_model().objects.create_user(**validated_data)  # Use create_user to hash the password
+        user.set_password(password)
+        user.save()
+        serializers.CharField()
+
+        # Create a token for the user
+        Token.objects.create(user=user)
         return user
-    
-class ProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'username', 'email', 'bio', 'profile_picture']
+ 
