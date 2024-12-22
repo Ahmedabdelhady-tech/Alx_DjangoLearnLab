@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import Notification
 from rest_framework import status
+from rest_framework import generics
+from .serializers import NotificationSerializer
 
 
 @api_view(['GET'])
@@ -38,3 +40,10 @@ def mark_notification_as_read(request, notification_id):
         return Response({"detail": "Notification marked as read."}, status=status.HTTP_200_OK)
     except Notification.DoesNotExist:
         return Response({"detail": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class NotificationListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user).order_by('-timestamp')
