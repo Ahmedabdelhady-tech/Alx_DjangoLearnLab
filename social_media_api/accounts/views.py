@@ -2,8 +2,8 @@ from rest_framework import status, views, generics, permissions
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.shortcuts import get_object_or_404
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, PostSerializer
-from .models import CustomUser, Post
+from .serializers import UserRegistrationSerializer, UserLoginSerializer
+from .models import CustomUser
 
 # View for user registration
 class UserRegistrationView(views.APIView):
@@ -38,12 +38,3 @@ class UnfollowUserView(generics.GenericAPIView):
         user_to_unfollow = get_object_or_404(CustomUser, id=user_id)
         request.user.following.remove(user_to_unfollow)
         return Response({'status': 'unfollowed'}, status=status.HTTP_200_OK)
-
-class FeedView(generics.ListAPIView):
-    serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        following_users = user.following.all()
-        return Post.objects.filter(author__in=following_users).order_by('-created_at')
