@@ -1,16 +1,16 @@
+from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
+from rest_framework.generics import get_object_or_404  # Ensure this is imported
 from .models import Post, Like
 from notifications.models import Notification
-from django.contrib.contenttypes.models import ContentType
 
 class LikePostView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]  # Use permissions.IsAuthenticated
 
     def post(self, request, pk):
-        post = get_object_or_404(Post, id=pk)
+        # Use get_object_or_404 to fetch the post
+        post = get_object_or_404(Post, pk=pk)  
         like, created = Like.objects.get_or_create(user=request.user, post=post)
         if created:
             # Create a notification for the post owner
@@ -24,10 +24,11 @@ class LikePostView(APIView):
         return Response({"message": "You already liked this post"}, status=400)
 
 class UnlikePostView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]  # Use permissions.IsAuthenticated
 
     def post(self, request, pk):
-        post = get_object_or_404(Post, id=pk)
+        # Use get_object_or_404 to fetch the post
+        post = get_object_or_404(Post, pk=pk)  
         like = Like.objects.filter(user=request.user, post=post).first()
         if like:
             like.delete()
