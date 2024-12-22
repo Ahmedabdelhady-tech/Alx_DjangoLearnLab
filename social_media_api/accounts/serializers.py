@@ -1,30 +1,40 @@
 from rest_framework import serializers
-from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
+from rest_framework.authtoken.models import Token
 
-# Get the custom user model
 User = get_user_model()
 
-class UserSerializer(serializers.ModelSerializer):
-    # Define password field explicitly and set write_only to true
+
+class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'bio', 'profile_picture', 'password']
-        extra_kwargs = {
-            'password': {'write_only': True}  # Don't return password in responses
-        }
+        fields = ['email', 'password', 'bio', 'profile_picture']
 
     def create(self, validated_data):
-        # Remove the password from the validated data before passing it to create_user
-        password = validated_data.pop('password')
-        user = get_user_model().objects.create_user(**validated_data)  # Use create_user to hash the password
-        user.set_password(password)
-        user.save()
-        serializers.CharField()
-
-        # Create a token for the user
+        user = get_user_model().objects.create_user(
+            email=validated_data['email'],
+            password=validated_data['password'],
+            bio=validated_data.get('bio', None),
+            profile_picture=validated_data.get('profile_picture', None)
+        )
         Token.objects.create(user=user)
         return user
- 
+
+
+class TokenSerializer(serializers.Serializer):
+    token = serializers.CharField()
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'password', 'bio', 'profile_picture', 'followers']
+        read_only_fields = ['email', 'followers']
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email']
